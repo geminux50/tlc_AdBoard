@@ -1,0 +1,67 @@
+html,body {
+	border: 0;
+	margin: 20px;
+	padding: 0;
+}
+
+body {
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+.price,#pricemin,#pricemax,label {
+	float: left;
+}
+
+#decription,#title {
+	width: 100%;
+}
+
+br {
+	clear: both;
+}
+
+input,textarea {
+	border: 1px solid black;
+	margin-bottom: .5em;
+	margin-bottom: .5em;
+}
+
+input.error {
+	border: 1px solid red;
+}
+
+label.error {
+	background: url('../img/unchecked.gif') no-repeat;
+	padding-left: 16px;
+	margin-left: .3em;
+}
+
+label.valid {
+	background: url('../img/checked.gif') no-repeat;
+	display: block;
+	width: 16px;
+	height: 16px;
+}
+
+.oneAd {
+	border: 1px solid #555555;
+	background-color: #eeeeee;
+	padding: 5px;
+	margin: 5px;
+	background-color: #eeeeee;
+	width: 400px;
+}
+
+.oneAd table {
+	table-layout: inherit;
+}
+
+.oneAd table field {
+	align: right;
+	width: 100px;
+}
+
+.oneAd table text {
+	width: 100px;
+	word-wrap: break-word;
+}
