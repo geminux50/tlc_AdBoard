@@ -17,6 +17,7 @@ import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
 
+@SuppressWarnings("serial")
 public class AddAdsServlet extends HttpServlet {
 	private static final Logger log = Logger.getLogger(AddAdsServlet.class
 			.getName());
@@ -26,11 +27,15 @@ public class AddAdsServlet extends HttpServlet {
 		UserService userService = UserServiceFactory.getUserService();
 		User user = userService.getCurrentUser();
 
+		// Si l'utilisateur est connecté
 		if (user != null) {
+			// On récupère les valeurs du POST. On a autant de valeur de
+			// (title|description|price) que d'annonces à ajouter
 			String[] titles = req.getParameterValues("title");
 			String[] descriptions = req.getParameterValues("description");
 			String[] prices = req.getParameterValues("price");
 
+			// On itère sur ces valeur
 			for (int i = 0; i < titles.length; i++) {
 				String title = titles[i];
 				String description = descriptions[i];
@@ -38,16 +43,21 @@ public class AddAdsServlet extends HttpServlet {
 				try {
 					price = Float.parseFloat(prices[i]);
 					if (title != null && !title.trim().isEmpty()) {
-						if (description != null && !description.trim().isEmpty()) {
+						if (description != null
+								&& !description.trim().isEmpty()) {
 							if (price != 0) {
 
 								Date date = new Date();
+								// On crée un objet Ad
 								Ad ad = new Ad(user, title, description, price,
 										date);
 								PersistenceManager pm = PMF.get()
 										.getPersistenceManager();
 								try {
+									// On rend l'objet persistant (JDO)
 									pm.makePersistent(ad);
+									// On index l'objet pour pouvoir faire des
+									// recherches (FTS, Ranges....)
 									ImportAdIntoIndex.processAd(ad);
 								} catch (Exception e) {
 									e.printStackTrace();
@@ -71,6 +81,8 @@ public class AddAdsServlet extends HttpServlet {
 					log.info("Ad id='" + i + "' has a wrong price format");
 				}
 			}
+			// On redirige vers la page d'accueil
+			//TODO Ajouter un callback indiquant le succès
 			resp.sendRedirect("/adboard.jsp");
 
 		} else {

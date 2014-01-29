@@ -11,11 +11,9 @@
 <head>
 <link rel="stylesheet" href="css/site.css">
 <script src="/js/jquery-1.9.1.min.js"></script>
-<script src="/js/jquery.validate.js"></script>
-<script src="/js/additional-methods.js"></script>
 <script>
+	// 	Bulk add of Ads
 	$(document).ready(
-
 			function() {
 				$('input#add_new').click(
 						function($e) {
@@ -24,39 +22,7 @@
 									.appendTo('div#addDivInner');
 						});
 			});
-
-// 	window.onload = function() {
-
-// 		jQuery.validator.setDefaults({
-// 			debug : false,
-// 			success : "valid"
-// 		});
-
-// 		$("#addForm").validate({
-// 			rules : {
-// 				price : {
-// 					required : true,
-// 					number : true
-// 				}
-// 			}
-// 		});
-
-// 		$("#searchForm").validate({
-// 			rules : {
-// 				pricemin : {
-// 					required : false,
-// 					number : true
-// 				},
-// 				pricemax : {
-// 					required : false,
-// 					number : true
-// 				},
-// 			}
-// 		});
-// 	};
 </script>
-
-
 </head>
 <body>
 	<h2>Bienvenue sur ce service de petites annonces</h2>
@@ -67,11 +33,11 @@
 		if (user != null) {
 	%>
 
-	<p style="font-size: 10px">
+	<p class="menu">
 		Connecté en tant que
 		<%=user.getNickname()%>! | <a
 			href="<%=userService.createLogoutURL(request.getRequestURI())%>">Se
-			déconnecter</a>.)
+			déconnecter</a> | <a href="/adboard.jsp">Retour à l'accueil</a>
 	</p>
 
 	<hr>
@@ -84,16 +50,16 @@
 					<table id="addTable">
 						<tr>
 							<td><label for="title">Titre:</label></td>
-							<td class="field"><input class="left" name=title id="title"></input></td>
+							<td class="field"><input name=title id="title"></input></td>
 						</tr>
 						<tr>
 							<td><label for="description">Description:</label></td>
-							<td><textarea class="left" name="description"
+							<td><textarea name="description"
 									id="description" rows="5" cols="35"></textarea></td>
 						</tr>
 						<tr>
 							<td><label for="price">Prix:</label></td>
-							<td><input class="left price" name="price"></input> €</td>
+							<td><input name="price"></input> €</td>
 						</tr>
 					</table>
 				</div>
@@ -111,39 +77,37 @@
 			<table>
 				<tr>
 					<td><label for="criteria">Mot-clé:</label></td>
-					<td><input class="left" name=criteria id="criteria"></input></td>
+					<td><input name=criteria id="criteria"></input></td>
 				</tr>
 				<tr></tr>
 				<tr>
 					<td><label for="pricemin">Prix Min:</label></td>
-					<td><input class="left" name=pricemin id="pricemin"></input> <i>(utiliser le point (.) comme séparateur)</i></td>
+					<td><input name=pricemin id="pricemin"></input> <i>(utiliser le point (.) comme séparateur)</i></td>
 				</tr>
 				<tr></tr>
 				<tr>
 					<td><label for="pricemax">Prix Max:</label></td>
-					<td><input class="left" name=pricemax id="pricemax"></input> <i>(utiliser le point (.) comme séparateur)</i></td>
+					<td><input name=pricemax id="pricemax"></input> <i>(utiliser le point (.) comme séparateur)</i></td>
 				</tr>
 				<tr></tr>
 				<tr>
 					<td><label for="datemin">Date Min:</label></td>
-					<td><input class="left" name=datemin id="datemin"></input> <i>(format jj/mm/aaaa)</i></td>
+					<td><input name=datemin id="datemin"></input> <i>(format jj/mm/aaaa)</i></td>
 				</tr>
 				<tr></tr>
 				<tr>
 					<td><label for="datemax">Date Max:</label></td>
-					<td><input class="left" name=datemax id="datemax"></input> <i>(format jj/mm/aaaa)</i></td>
+					<td><input name=datemax id="datemax"></input> <i>(format jj/mm/aaaa)</i></td>
 				</tr>
 
 			</table>
 			<input type="submit" value="Chercher" />
 		</div>
 	</form>
-
-
 	<%
 		} else {
 	%>
-	<p style="font-size: 10px">
+	<p class="menu">
 		Vous devez vous <a
 			href="<%=userService.createLoginURL(request.getRequestURI())%>">connecter</a>
 		pour accéder au service.
@@ -151,51 +115,5 @@
 	<%
 		}
 	%>
-
-	<hr>
-
-	<%
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		String query = "select from " + Ad.class.getName()
-				+ " order by date desc";
-		List<Ad> ads = (List<Ad>) pm.newQuery(query).execute();
-		if (ads.isEmpty()) {
-	%>
-	<p>The adboard has no ad.</p>
-	<%
-		} else {
-			for (Ad g : ads) {
-				if (g.getAuthor() != null) {
-	%>
-	<p>
-		<b><%=g.getAuthor().getNickname()%></b> a posté l'annonce suivante :
-	</p>
-	<table>
-		<tr>
-			<td><label>Titre</label></td>
-			<td><blockquote><%=g.getTitle()%></blockquote></td>
-		</tr>
-		<tr>
-			<td><label>Description</label></td>
-			<td><blockquote><%=g.getDescription()%></blockquote></td>
-		</tr>
-		<tr>
-			<td><label>Prix</label></td>
-			<td><blockquote><%=g.getPrice()%>
-					€
-				</blockquote></td>
-		</tr>
-	</table>
-	<p style="font-size: 10px; font-style: italic">
-		Posté le
-		<%=g.getDate()%></p>
-	<hr align="left" width="100px">
-	<%
-		}
-			}
-		}
-		pm.close();
-	%>
-
 </body>
 </html>

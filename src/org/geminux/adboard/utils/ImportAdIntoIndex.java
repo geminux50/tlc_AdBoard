@@ -1,7 +1,5 @@
 /**
- * This utility is used to load sample contacts in the Google App Engine Search Index. It will load the records that are present
- * in the file defined in the Constants.SAMPLE_CONTACTS_DATA_FILE property. The loadData() method is invoked via the 
- * '/importindex' endpoint.
+ * This utility is used to load Ad in the Google App Engine Search Index. 
  */
 
 package org.geminux.adboard.utils;

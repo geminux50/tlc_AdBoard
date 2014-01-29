@@ -1,7 +1,10 @@
 package org.geminux.adboard.servlets;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -22,6 +25,7 @@ import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
 
+@SuppressWarnings("serial")
 public class SearchAdsServlet extends HttpServlet {
 	private static final Logger log = Logger.getLogger(SearchAdsServlet.class
 			.getName());
@@ -32,62 +36,137 @@ public class SearchAdsServlet extends HttpServlet {
 		User user = userService.getCurrentUser();
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 
+		// Si l'utilisateur est connecté
 		if (user != null) {
-			String logStr = null;
-			String criteria = req.getParameter("criteria");
-			String priceMin = req.getParameter("pricemin");
-			String priceMax = req.getParameter("pricemax");
-			Double priceMinDouble = null;
-			Double priceMaxDouble = null;
 
-			if (criteria != null && !criteria.trim().isEmpty()) {
-				logStr = "Looking for ad with criteria '" + criteria;
-				log.info(logStr);
+			// StringBuilder for logs
+			StringBuilder logStr = new StringBuilder("Retrieved value are :");
 
-				List<Ad> adsList = new ArrayList<Ad>();
+			// Retrieved RAW fields from HTTP<$_POST>
+			String paramCriteria = req.getParameter("criteria");
+			String paramPriceMin = req.getParameter("pricemin");
+			String paramPriceMax = req.getParameter("pricemax");
+			String paramDateMin = req.getParameter("datemin");
+			String paramDateMax = req.getParameter("datemax");
 
-				// Retrieve the list of Documents that match the SearchText
+			// Retrieved TYPED fields from HTTP<$_POST>
+			String criteria = null;
+			Double priceMin = null;
+			Double priceMax = null;
+			Date dateMin = null;
+			Date dateMax = null;
+
+			// Documents from the Indexed DB than match search params
+			Results<ScoredDocument> results = null;
+
+			// List of Ads to be passed to the JSP for display
+			List<Ad> adsList = new ArrayList<Ad>();
+
+			// View where we'll redirect the user to
+			RequestDispatcher view = req
+					.getRequestDispatcher("/searchResult.jsp");
+
+			if (paramCriteria != null && !paramCriteria.trim().isEmpty()) {
+				criteria = paramCriteria;
+				logStr.append("[criteria='" + criteria + "']");
+			}
+
+			try {
+
+				if (paramPriceMin != null && !paramPriceMin.trim().isEmpty()) {
+					try {
+						priceMin = Double.valueOf(paramPriceMin);
+					} catch (NumberFormatException e) {
+						throw new Exception("'" + paramPriceMin
+								+ "' n'est pas un nombre valide");
+					}
+					logStr.append("[priceMin='" + priceMin + "']");
+				}
+
+				if (paramPriceMax != null && !paramPriceMax.trim().isEmpty()) {
+					try {
+						priceMax = Double.valueOf(paramPriceMax);
+					} catch (NumberFormatException e) {
+						throw new Exception("'" + paramPriceMax
+								+ "' n'est pas un nombre valide");
+					}
+					logStr.append("[priceMax='" + priceMax + "']");
+				}
+
+				if (paramDateMin != null && !paramDateMin.trim().isEmpty()) {
+					try {
+						dateMin = new SimpleDateFormat("dd/MM/yyyy")
+								.parse(paramDateMin);
+					} catch (ParseException e) {
+						throw new Exception("'" + paramDateMin
+								+ "' n'est pas une date valide");
+					}
+					logStr.append("[dateMin='" + dateMin + "']");
+				}
+
+				if (paramDateMax != null && !paramDateMax.trim().isEmpty()) {
+					try {
+						dateMax = new SimpleDateFormat("dd/MM/yyyy")
+								.parse(paramDateMax);
+					} catch (ParseException e) {
+						throw new Exception("'" + paramDateMax
+								+ "' n'est pas une date valide");
+					}
+					logStr.append("[dateMax='" + dateMax + "']");
+				}
+
+				log.info(logStr.toString());
+
+				// Retrieve the list of Documents that match the parameters
 				// entered.
-				Results<ScoredDocument> results = SearchIndexManager.INSTANCE
-						.retrieveDocuments(criteria, priceMinDouble, priceMaxDouble, null, null);
+				results = SearchIndexManager.INSTANCE.retrieveDocuments(
+						criteria, priceMin, priceMax, dateMin, dateMax);
 
-				// For each of the documents, extract out the attributes from
-				// the document and populate the Employee entity class
-				// Add the Employee object to the Employees collection
+				// For each of the documents, extract out the id
 				for (ScoredDocument scoredDocument : results) {
 					long id = Long.valueOf(scoredDocument.getId());
 
 					// Retrieve the Ad from JDO
 					Ad ad = pm.getObjectById(Ad.class, id);
 
-					// Add the add to the returned list of Ads
+					// Add the Ad to the returned list of Ads
 					adsList.add(ad);
 				}
 
-				// String query = "select from " + Ad.class.getName()
-				// + " where title:" + criteria +" order by date desc";
-				// List<Ad> ads = (List<Ad>) pm.newQuery(query)
-				// .execute();
-				// req.setAttribute("adList", ads);
+				// Set $_POST attributes to be passed to the JSP
 				req.setAttribute("adList", adsList);
-
 				req.setAttribute("criteria", criteria);
 
-				RequestDispatcher view = req
-						.getRequestDispatcher("/searchResult.jsp");
+				view.forward(req, resp);
+			} catch (ParseException e) {
+				req.setAttribute("errMsg", e.getMessage());
+
 				try {
 					view.forward(req, resp);
-				} catch (ServletException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} finally {
-					pm.close();
+				} catch (ServletException e1) {
+					e1.printStackTrace();
 				}
-				// resp.sendRedirect("/adboard.jsp");
-			} else {
-				log.info("Missing criteria");
-				resp.sendRedirect("/adboard.jsp");
+			} catch (NumberFormatException e) {
+				req.setAttribute("errMsg", e.getMessage());
+
+				try {
+					view.forward(req, resp);
+				} catch (ServletException e1) {
+					e1.printStackTrace();
+				}
+			} catch (Exception e) {
+				req.setAttribute("errMsg", e.getMessage());
+
+				try {
+					view.forward(req, resp);
+				} catch (ServletException e1) {
+					e1.printStackTrace();
+				}
+
+			} finally {
+				pm.close();
 			}
+
 		} else {
 			log.info("User not logged in");
 			resp.sendRedirect("/adboard.jsp");
